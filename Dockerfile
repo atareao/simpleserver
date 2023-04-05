@@ -5,6 +5,10 @@ FROM rust:1.64 AS builder
 
 LABEL maintainer="Lorenzo Carbonell <a.k.a. atareao> lorenzo.carbonell.cerezo@gmail.com"
 
+# Create appuser
+ENV USER=app
+ENV UID=10001
+
 ARG TARGET=x86_64-unknown-linux-musl
 ENV RUST_MUSL_CROSS_TARGET=$TARGET
 ENV OPENSSL_LIB_DIR="/usr/lib/x86_64-linux-gnu"
@@ -24,6 +28,14 @@ RUN rustup target add $TARGET && \
         && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/${USER}" \
+    --shell "/sbin/nologin" \
+    --uid "${UID}" \
+    "${USER}"
+
 WORKDIR /app
 
 COPY Cargo.toml Cargo.lock ./
@@ -37,19 +49,19 @@ RUN cargo build --release --target $TARGET && \
 ###############################################################################
 FROM alpine:3.17
 
-RUN apk add --update --no-cache \
-            su-exec~=0.2 && \
-    rm -rf /var/cache/apk && \
-    rm -rf /var/lib/app/lists*
-# Copy the user
-
 # Set the work dir
 WORKDIR /app
 
-COPY entrypoint.sh /app/
 COPY content /app/content
+
 # Copy our build
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
 COPY --from=builder /app/simpleserver /app/
 
-ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
+RUN mkdir -p /app/db /app/audios && \
+    chown -R app: /app
+
+USER app
+
 CMD ["/app/simpleserver"]
