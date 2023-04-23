@@ -59,8 +59,7 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 COPY --from=builder /app/simpleserver /app/
 
-RUN mkdir -p /app/db /app/audios && \
-    chown -R app: /app
+RUN chown -R app: /app
 
 USER app
 
