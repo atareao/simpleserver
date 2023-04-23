@@ -1,6 +1,6 @@
 mod estatic;
 
-use std::{net::{SocketAddr, Ipv4Addr}};
+use std::net::{SocketAddr, Ipv4Addr};
 use tower_http::trace::TraceLayer;
 use std::env::var;
 
