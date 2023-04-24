@@ -31,7 +31,11 @@ async fn handler(uri: Uri) -> Result<Response<BoxBody>, (StatusCode, String)>{
 
 async fn get_static_file(uri: &Uri) -> Result<Response<BoxBody>, (StatusCode, String)> {
     tracing::debug!("Uri: {}", uri);
-    let filename = format!("{}{}", CONTENT_DIR, uri.path());
+    let filename = if uri.path() == "/" {
+        format!("{}/{}", CONTENT_DIR, "index.html")
+    }else{
+        format!("{}{}", CONTENT_DIR, uri.path())
+    };
     tracing::debug!("Filename: {}", filename);
     let def_uri = match tokio::fs::metadata(&filename).await {
         Ok(file) => if file.is_file(){
